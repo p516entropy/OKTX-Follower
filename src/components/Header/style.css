@@ -1,0 +1,14 @@
+ul.navbar-nav a {
+  text-decoration: none;
+  margin: 0 10px 0 0;
+  color: #fff;
+}
+
+ul.navbar-nav a:hover {
+  color: lightblue;
+}
+
+.listRight {
+  left: auto !important;
+  right: 0 !important;
+}
