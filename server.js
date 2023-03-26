@@ -4,8 +4,12 @@ const path = require('path')
 const bodyParser = require('body-parser')
 const favicon = require('serve-favicon')
 const axios = require("axios");
+const {subscriptions, getAbiByAddress, saveAbiByAddress} = require("./server-repository");
+const {init} = require("./okc-bot");
 
 const app = express();
+
+init();
 
 app.set('port', process.env.PORT || 3000);
 app.use(favicon(__dirname + '/public/favicon.ico'));
@@ -17,35 +21,9 @@ app.get("/api", (req, res) => {
   res.json({message: "Hello from server!"});
 });
 
-const subscriptions = [{
-  id: 1,
-  triggered: 12222,
-  address: "1231231231231231231231231231231234",
-  selectedChannels: ['telegram'],
-  conditions: []
-}, {
-  id: 2,
-  triggered: 5,
-  address: "34534534534",
-  selectedChannels: ['telegram'],
-  conditions: [{
-    config: {
-      label: "qq"
-    },
-    value: 1
-  }, {
-    config: {
-      label: "sdfsdf"
-    },
-    value: 1
-  }]
-}]
-
 app.get("/api/subscription", (req, res) => {
   res.json(subscriptions);
 });
-
-const abiData = {}
 
 const retrieveOklinkAbis = async (contractAddress) => {
   try {
@@ -85,9 +63,11 @@ app.get("/api/abi/:address", async (req, res) => {
       res.json([]);
       return
     }
-    const abis = abiData[contractAddress] ? abiData[contractAddress] : await retrieveOklinkAbis(contractAddress)
-    if (!abiData[contractAddress]) {
-      abiData[contractAddress] = abis
+    const abis = getAbiByAddress(contractAddress)
+      ? getAbiByAddress(contractAddress)
+      : await retrieveOklinkAbis(contractAddress)
+    if (!getAbiByAddress(contractAddress)) {
+      saveAbiByAddress(contractAddress, abis)
     }
     const allMethods = abis.map(method => method.name).filter(item => item)
     res.json(allMethods);
