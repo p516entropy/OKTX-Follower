@@ -2,6 +2,7 @@ const Web3 = require("web3");
 const OKC_WEBSOCKET_URL = "wss://exchainws.okex.org:8443"
 const abiDecoder = require('abi-decoder');
 const {subscriptions, getAbiByAddress, incrementSubscriptionTriggered} = require("./server-repository");
+const {sendTelegramNotification} = require("./telegram-notificator");
 
 const options = {
     timeout: 30000,
@@ -76,10 +77,13 @@ const transactionToSubscriptionsConstruct = (transactionsTriggers) => {
     return Object.values(triggeredSubscriptionById)
 }
 
-const triggerNotifications = (subscriptionTriggers) => {
+const triggerNotifications = async (subscriptionTriggers) => {
     for (const subscriptionTrigger of subscriptionTriggers) {
         const subscription = subscriptionTrigger.subscription
         incrementSubscriptionTriggered(subscription, subscriptionTrigger.transactions.length)
+        const conditionText = !!subscription.conditions && subscription.conditions.length > 0 ?
+          `Your additional filters: ${JSON.stringify(subscription.conditions)}` : ""
+        await sendTelegramNotification(`Subscription was triggered as interaction with address ${subscription.address} happened.\n${conditionText}`)
     }
 }
 
@@ -92,8 +96,7 @@ const init = async function () {
                 delete methodIDs[prop];
             }
             abiDecoder.getABIs().splice(0, abiDecoder.getABIs().length)
-
-            const block = await web3.eth.getBlock(18280038, true)
+            const block = await web3.eth.getBlock(data.number, true)
             const transactions = block.transactions
             console.log(data.number)
             const transactionsTriggers = []
@@ -107,7 +110,7 @@ const init = async function () {
                 })
             }
             const subscriptionTriggers = transactionToSubscriptionsConstruct(transactionsTriggers);
-            triggerNotifications(subscriptionTriggers)
+            await triggerNotifications(subscriptionTriggers)
         } catch (err) {
             console.error(err);
         }

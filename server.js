@@ -12,6 +12,7 @@ const app = express();
 init();
 
 app.set('port', process.env.PORT || 3000);
+app.set('trust proxy', true);
 app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use(bodyParser.urlencoded());
 app.use(express.json());
@@ -27,11 +28,12 @@ app.get("/api/subscription", (req, res) => {
 
 const retrieveOklinkAbis = async (contractAddress) => {
   try {
+    let apiKey = "apiKey";
     const response = await axios.get(
       `https://www.oklink.com/api/explorer/v1/okexchain/addresses/${contractAddress}/contract`,
       {
         headers: {
-          "x-apikey": "LWIzMWUtNDU0Ny05Mjk5LWI2ZDA3Yjc2MzFhYmEyYzkwM2NjfDI3OTA4MzcyMTI4OTE1MTQ="
+          "x-apikey": apiKey
         }
       });
 
